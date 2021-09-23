@@ -82,8 +82,7 @@ void Loop_calculos() {
 	}
 	
 	else if (Combustion.ij == 3) {
-		//Combustion.Adiab_Temp();
-		cout << "\nEste modulo aun no esta terminado, lo siento :( \n";
+		Combustion.Adiab_Temp();	//This is new
 	}
 	
 	else {
