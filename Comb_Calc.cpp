@@ -28,7 +28,7 @@ const int Tr = 298;				//Temperatura de referencia [K]
 		ath = (alpha + beta / 4 - gamma / 2);
 		fs = Mf / (ath*4.76*Ma);
 
-		cout << "\nIndique la variable conocida: \n1) Porcentaje de aire en exceso\n2) Relacion Aire-Combustible\n3) Relacion de equivalencia\nSu eleccion:  ";
+		cout << "\nIndique la variable conocida: \n1) Porcentaje de aire en exceso\n2) Relacion Aire-Combustible\n3) Relacion de equivalencia\nSu eleccion: ";
 		cin >> i;
 
 		switch (i) {
@@ -95,11 +95,13 @@ const int Tr = 298;				//Temperatura de referencia [K]
 		}
 
 		else if (i == 3) {
+			cout << "Indique la primera suposicion de temperatura de flama adiabatica en [K]: ";
+			cin >> Te;
 		}
 		
 
 
-		cout << "\nIndique el combustible a utilizar: \n1) Metano \n2) Acetileno \n3) Etano \n4) Etanol \n5) Propano \n6) Butano\nSu eleccion:  ";
+		cout << "\nIndique el combustible a utilizar: \n1) Metano \n2) Acetileno \n3) Etano \n4) Etanol \n5) Propano \nSu eleccion: ";
 		cin >> ii;
 
 		switch (ii) {
@@ -166,6 +168,7 @@ const int Tr = 298;				//Temperatura de referencia [K]
 				Combustible.b = 10.0;
 				Combustible.c = 0.0;
 				break;
+			
 
 		}
 
@@ -177,8 +180,12 @@ const int Tr = 298;				//Temperatura de referencia [K]
 
 	void Comb_Calc::Heat_Calc() {						//Cacula el calor liberado en la combustion con aire seco
 
+		// Se calcula la entalpia de los reactivos a la temperatura de entrada
+		// Entalpia del aire seco:
 		Hr = ath * (EA / 100 + 1) * (O2.hfg + (gas_enthalpy(Ti, 4) - O2.hs) + 3.76*(N2.hfg + (gas_enthalpy(Ti, 2) - N2.hs)));
+		// Entalpia del combustible:
 		Hc = Combustible.hfc + (Fuel_Enthalpy(Tic, ii) - Combustible.hs);
+		// Se calcula la entalpia de los productos a la temperatura de salida
 		Hp = alpha * (CO2.hfg + (gas_enthalpy(Te, 1) - CO2.hs)) + 3.76 * ath * (EA / 100 + 1)*(N2.hfg + (gas_enthalpy(Te, 2) - N2.hs)) + (beta / 2)* (H2O.hfg + (gas_enthalpy(Te, 3) - H2O.hs)) + ath * EA / 100 * (O2.hfg + (gas_enthalpy(Te, 4) - O2.hs));	
 
 		Q = Hc + Hr - Hp;
@@ -207,12 +214,16 @@ const int Tr = 298;				//Temperatura de referencia [K]
 		Nv = (4.76*ath*Xi) / (1 - Xi);	//Se calculan los moles de vapor de agua contenidos en el aire atmosferico
 		Pv = Ptotal*(beta/2 + Nv) / (alpha + 3.76 * ath * (EA / 100 + 1) + beta/2 + ath * EA / 100);	//Se calcula la presion parcial de la humedad en los productos de combustion en kilopascal
 
-		Tsat = Water_Vapor_T(Pv);	//Se calcula la temperatura de punto de rocio de los gases de combustion en ªC
+		Tsat = Water_Vapor_T(Pv);	//Se calcula la temperatura de punto de rocio de los gases de combustion en ÂªC
 
 		//Se realizan los calculos de calor de combustion incluyendo la humedad del aire
 
+		// Se calcula la entalpia de los reactivos a la temperatura de entrada
+		// Entalpia del aire seco:
 		Hr = ath * (EA / 100 + 1) * (O2.hfg + (gas_enthalpy(Ti, 4) - O2.hs) + 3.76*(N2.hfg + (gas_enthalpy(Ti, 2) - N2.hs))) + Nv*(H2O.hfg + (gas_enthalpy(Ti, 3) - H2O.hs));
+		// Entalpia del combustible:
 		Hc = Combustible.hfc + (Fuel_Enthalpy(Tic, ii) - Combustible.hs);
+		// Se calcula la entalpia de los productos a la temperatura de salida
 		Hp = alpha * (CO2.hfg + (gas_enthalpy(Te, 1) - CO2.hs)) + 3.76 * ath * (EA / 100 + 1)*(N2.hfg + (gas_enthalpy(Te, 2) - N2.hs)) + (beta / 2 + Nv)* (H2O.hfg + (gas_enthalpy(Te, 3) - H2O.hs)) + ath * EA / 100 * (O2.hfg + (gas_enthalpy(Te, 4) - O2.hs));	
 
 		Q = Hc + Hr - Hp;
@@ -222,28 +233,63 @@ const int Tr = 298;				//Temperatura de referencia [K]
 		cout << "\nLa temperatura de punto de rocio de los productos de combustion es: " << Tsat << " grados Celsius";
 	}
 
-	void Comb_Calc::Adiab_Temp() {		//Calcula la temperatura de flama adiabatica
+	void Comb_Calc::Adiab_Temp() {		//Calcula la temperatura de flama adiabatica utilizando el Metodo de Biseccion
 
-		double Eq, Tad;
+		double Eq = 0, Tad = 0, Ttest1 = 0, Ttest2 = 0, Hptest1 = 0, Hptest2 = 0, Eqtest1 = 0, Eqtest2 = 0;
 
+		// Se calcula la entalpia de los reactivos a la temperatura de entrada
+		// Entalpia del aire seco:
 		Hr = ath * (EA / 100 + 1) * (O2.hfg + (gas_enthalpy(Ti, 4) - O2.hs) + 3.76*(N2.hfg + (gas_enthalpy(Ti, 2) - N2.hs)));
+		// Entalpia del combustible:
 		Hc = Combustible.hfc + (Fuel_Enthalpy(Tic, ii) - Combustible.hs);
 		
-		Tad = Ti;
+		Ttest1 = 0.5*Te;
+		Ttest2 = 1.5*Te;
+		Tad = (Ttest1 + Ttest2)/2;
+
 		int it = 0;
 
 		do {
 			
-			Eq = 0;
-			Hp = alpha * (CO2.hfg + (gas_enthalpy(Te, 1) - CO2.hs)) + 3.76 * ath * (EA / 100 + 1)*(N2.hfg + (gas_enthalpy(Te, 2) - N2.hs)) + (beta / 2)* (H2O.hfg + (gas_enthalpy(Te, 3) - H2O.hs)) + ath * EA / 100 * (O2.hfg + (gas_enthalpy(Te, 4) - O2.hs));
-			Eq = Hc + Hr - Hp;
-			Tad = Tad + 0.1;
-			it = it + 1;
+			Hptest1 = alpha * (CO2.hfg + (gas_enthalpy(Ttest1, 1) - CO2.hs)) + 3.76 * ath * (EA / 100 + 1)*(N2.hfg + (gas_enthalpy(Ttest1, 2) - N2.hs)) + (beta / 2)* (H2O.hfg + (gas_enthalpy(Ttest1, 3) - H2O.hs)) + ath * EA / 100 * (O2.hfg + (gas_enthalpy(Ttest1, 4) - O2.hs));
+			Hptest2 = alpha * (CO2.hfg + (gas_enthalpy(Ttest2, 1) - CO2.hs)) + 3.76 * ath * (EA / 100 + 1)*(N2.hfg + (gas_enthalpy(Ttest2, 2) - N2.hs)) + (beta / 2)* (H2O.hfg + (gas_enthalpy(Ttest2, 3) - H2O.hs)) + ath * EA / 100 * (O2.hfg + (gas_enthalpy(Ttest2, 4) - O2.hs));
+			Hp = alpha * (CO2.hfg + (gas_enthalpy(Tad, 1) - CO2.hs)) + 3.76 * ath * (EA / 100 + 1)*(N2.hfg + (gas_enthalpy(Tad, 2) - N2.hs)) + (beta / 2)* (H2O.hfg + (gas_enthalpy(Tad, 3) - H2O.hs)) + ath * EA / 100 * (O2.hfg + (gas_enthalpy(Tad, 4) - O2.hs));
 
-		} while ( it < 100000 );
+			Eqtest1 = Hc + Hr - Hptest1;
+			Eqtest2 = Hc + Hr - Hptest2;
+			Eq = Hc + Hr - Hp;
+
+			if (Eq > 0 || Eq < 0)
+			{
+				if (Eq*Eqtest1 > 0)
+				{
+					Ttest1 = Tad;
+				}
+
+				else if (Eq*Eqtest1 < 0)
+				{
+					Ttest2 = Tad;
+				}
+
+				it = it + 1;
+				Tad = (Ttest1 + Ttest2)/2;
+				
+			}
+
+			else if (Eq == 0)
+			{
+				/* boom you found the adiabatic flame temperature */
+			}
+			
+
+		} while ( abs(Eq) > 1E-06 && it < 100 );
 		
-		cout << "Eq = " << Eq << endl;
-		cout << "La Temperatura de Flama Adiabatica es: " << Tad;
+		if (abs(Eq) > 1E-03)
+		{
+			cout << "\nMejore la primera temperatura supuesta, no hubo convergencia";
+		}
+		cout << "\nQ = Hr - Hp = " << Eq << endl;
+		cout << "La Temperatura de Flama Adiabatica es: " << Tad << " K";
 
 	}
 
@@ -362,4 +408,3 @@ const int Tr = 298;				//Temperatura de referencia [K]
 	
 		return value_hg;
 	}
-
