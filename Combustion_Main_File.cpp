@@ -21,12 +21,12 @@ int main() {
 
 		Loop_calculos();
 
-		cout << "\n\nWould you like to keep making calculations?";
+		cout << "\n\n¿Quieres realizar otro calculo?";
 		cout << "\n[0] No ";
-		cout << "\n[1] Yes ";
+		cout << "\n[1] Si ";
+		cout << "\nSu eleccion: ";
 		cin >> a;
-		system("CLS");
-
+		
 	} while (a!= 0);
 
 }
