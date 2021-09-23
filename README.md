@@ -22,3 +22,9 @@ Messages and comments are in Spanish, my bad, soon I'll translate them into Engl
 I'm open to comments, greetings
 
 By the way, I'm learning to use this platform, sorry for the mistakes if there's any hehe
+
+23/09/2021
+
+- The adiabatic flame temperature module was modified and included to the code, it solves the problem using Bisection Method. It depends on the first guess of the adiabatic flame temperature, if the method didn't get convergence, an output message will come out saying "Improve your first guess, convergence was not reached".
+
+- Comments and output messages are still in Spanish :) 
